@@ -6,13 +6,15 @@ pub fn main() !void {
     try enableRawMode();
     const stdin = io.getStdIn().reader();
     var c: [1]u8 = undefined;
-    while (true) 
-        if (try stdin.read(&c) != 1 or c[0] == 'q') break;
+    while (true) {
+        var c_size = try stdin.read(&c);
+        if (c_size != 1 or c[0] == 'q') break;
+    }   
 }
 
 fn enableRawMode() !void {
     const handler = io.getStdIn().handle;
     var raw = try os.tcgetattr(handler);
-    raw.lflag &= ~@as(os.tcflag_t, os.linux.ECHO);
+    raw.lflag &= ~(os.linux.ECHO);
     try os.tcsetattr(handler, os.TCSA.FLUSH, raw);
 }

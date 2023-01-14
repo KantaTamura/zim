@@ -26,7 +26,7 @@ pub fn main() !void {
         } else {
             try stdout.print("{d} ('{c}')\r\n", .{ c, c });
         }
-        if (c == 'q') break;
+        if (c == ctrlKey('q')) break;
     }
 }
 
@@ -46,4 +46,8 @@ fn disableRawMode() void {
     os.tcsetattr(stdin_handle, os.TCSA.FLUSH, original_termios) catch |err| {
         std.debug.print("{}", .{err});
     };
+}
+
+fn ctrlKey(k : u8) u8 {
+    return k & 0x1f;
 }

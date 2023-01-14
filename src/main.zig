@@ -18,9 +18,9 @@ pub fn main() !void {
         if (buf_size != 1 or buf[0] == 'q') break;
         const c = buf[0];
         if (ascii.isControl(c)) {
-            try stdout.print("{d}\n", .{c});
+            try stdout.print("{d}\r\n", .{c});
         } else {
-            try stdout.print("{d} ('{c}')\n", .{ c, c });
+            try stdout.print("{d} ('{c}')\r\n", .{ c, c });
         }
     }
 }
@@ -28,8 +28,10 @@ pub fn main() !void {
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.IXON);
-    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.ISIG);
+    raw.iflag &= ~(os.linux.BRKINT | os.linux.ICRNL | os.linux.INPCK | os.linux.ISTRIP | os.linux.IXON);
+    raw.oflag &= ~(os.linux.OPOST);
+    raw.cflag |=  (os.linux.CS8);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.IEXTEN | os.linux.ISIG);
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 

@@ -1,5 +1,9 @@
 const std = @import("std");
+const io = std.io;
 
 pub fn main() !void {
-    std.debug.print("Hello World!\n", .{});
+    const stdin = io.getStdIn().reader();
+    var c: [1]u8 = undefined;
+    while (true) 
+        if (try stdin.read(&c) != 1) break;
 }

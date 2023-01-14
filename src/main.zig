@@ -3,6 +3,10 @@ const io = std.io;
 const os = std.os;
 const ascii = std.ascii;
 
+// termios cc id
+const VMIN  = 6;
+const VTIME = 5;
+
 // default terminal attribute
 var original_termios: os.termios = undefined;
 const stdin_handle = io.getStdIn().handle;
@@ -14,14 +18,15 @@ pub fn main() !void {
     defer disableRawMode();
     var buf: [1]u8 = undefined;
     while (true) {
-        var buf_size = try stdin.read(&buf);
-        if (buf_size != 1 or buf[0] == 'q') break;
+        buf[0] = 0;
+        _ = try stdin.read(&buf);
         const c = buf[0];
         if (ascii.isControl(c)) {
             try stdout.print("{d}\r\n", .{c});
         } else {
             try stdout.print("{d} ('{c}')\r\n", .{ c, c });
         }
+        if (c == 'q') break;
     }
 }
 
@@ -32,6 +37,8 @@ fn enableRawMode() !void {
     raw.oflag &= ~(os.linux.OPOST);
     raw.cflag |=  (os.linux.CS8);
     raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.IEXTEN | os.linux.ISIG);
+    raw.cc[VMIN]  = 0;
+    raw.cc[VTIME] = 1;
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 

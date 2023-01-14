@@ -25,8 +25,12 @@
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.IXON);
-    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.ISIG);
+    raw.iflag &= ~(os.linux.BRKINT | os.linux.ICRNL | os.linux.INPCK | os.linux.ISTRIP | os.linux.IXON);
+    raw.oflag &= ~(os.linux.OPOST);
+    raw.cflag |=  (os.linux.CS8);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.IEXTEN | os.linux.ISIG);
+    raw.cc[VMIN]  = 0;
+    raw.cc[VTIME] = 1;
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 ```

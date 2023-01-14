@@ -1,19 +1,27 @@
 const std = @import("std");
 const io = std.io;
 const os = std.os;
+const ascii = std.ascii;
 
 // default terminal attribute
-var original_termios : os.termios = undefined;
+var original_termios: os.termios = undefined;
 const stdin_handle = io.getStdIn().handle;
 
 pub fn main() !void {
-    defer disableRawMode();
-    try enableRawMode();
     const stdin = io.getStdIn().reader();
-    var c: [1]u8 = undefined;
+    const stdout = io.getStdOut().writer();
+    try enableRawMode();
+    defer disableRawMode();
+    var buf: [1]u8 = undefined;
     while (true) {
-        var c_size = try stdin.read(&c);
-        if (c_size != 1 or c[0] == 'q') break;
+        var buf_size = try stdin.read(&buf);
+        if (buf_size != 1 or buf[0] == 'q') break;
+        const c = buf[0];
+        if (ascii.isCntrl(c)) {
+            try stdout.print("{d}\n", .{c});
+        } else {
+            try stdout.print("{d} ('{c}')\n", .{c, c});
+        }
     }
 }
 

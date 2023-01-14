@@ -17,10 +17,10 @@ pub fn main() !void {
         var buf_size = try stdin.read(&buf);
         if (buf_size != 1 or buf[0] == 'q') break;
         const c = buf[0];
-        if (ascii.isCntrl(c)) {
+        if (ascii.isControl(c)) {
             try stdout.print("{d}\n", .{c});
         } else {
-            try stdout.print("{d} ('{c}')\n", .{c, c});
+            try stdout.print("{d} ('{c}')\n", .{ c, c });
         }
     }
 }
@@ -28,7 +28,7 @@ pub fn main() !void {
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.ISIG);
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 

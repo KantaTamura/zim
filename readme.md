@@ -14,13 +14,13 @@
 
 #### Raw Mode
 
-ターミナルの`echo属性`(キーボードの入力を表示する)と`icanon属性`(行ごとに入力を受け付ける)を切る．
+ターミナルの`echo属性`(キーボードの入力を表示する)と`icanon属性`(行ごとに入力を受け付ける)と`isig属性`(Ctrl-Cで終了など)を切る．
 
 ```
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.ISIG);
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 ```

@@ -9,3 +9,7 @@
 ### 機能
 
 標準入力を受け取る簡単なプログラム
+
+### 参考文献
+
+[Build Your Own Text Editor](https://viewsourcecode.org/snaptoken/kilo/ "kilo editor")

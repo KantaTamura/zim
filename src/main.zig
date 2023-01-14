@@ -20,7 +20,7 @@ pub fn main() !void {
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.ECHO);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON);
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 

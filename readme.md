@@ -10,17 +10,17 @@
 
 標準入力を受け取る簡単なプログラム
 
-EOFか'q'が入力された場合終了する
+'q'が入力された場合終了する
 
 #### Raw Mode
 
-ターミナルの`echo属性`(キーボードの入力を表示する)を切る
+ターミナルの`echo属性`(キーボードの入力を表示する)と`icanon属性`(行ごとに入力を受け付ける)を切る．
 
 ```
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
-    raw.lflag &= ~(os.linux.ECHO);
+    raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON);
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
 ```

@@ -1,10 +1,11 @@
 const std = @import("std");
 const io = std.io;
 const os = std.os;
+const debug = std.debug;
 const ascii = std.ascii;
 
 // termios cc id
-const VMIN  = 6;
+const VMIN = 6;
 const VTIME = 5;
 
 // default terminal attribute
@@ -12,21 +13,31 @@ var original_termios: os.termios = undefined;
 const stdin_handle = io.getStdIn().handle;
 
 pub fn main() !void {
-    const stdin = io.getStdIn().reader();
-    const stdout = io.getStdOut().writer();
     try enableRawMode();
     defer disableRawMode();
+    while (true) {
+        editorProcessKeyPress();
+    }
+}
+
+fn editorReadkey() u8 {
+    const stdin = io.getStdIn().reader();
     var buf: [1]u8 = undefined;
     while (true) {
-        buf[0] = 0;
-        _ = try stdin.read(&buf);
-        const c = buf[0];
-        if (ascii.isControl(c)) {
-            try stdout.print("{d}\r\n", .{c});
-        } else {
-            try stdout.print("{d} ('{c}')\r\n", .{ c, c });
-        }
-        if (c == ctrlKey('q')) break;
+        var nread = stdin.read(&buf) catch debug.panic("{s}\n", .{"read"});
+        if (nread == 1) break;
+    }
+    return buf[0];
+}
+
+fn editorProcessKeyPress() void {
+    var c = editorReadkey();
+
+    switch (c) {
+        ctrlKey('q') => {
+            os.exit(0);
+        },
+        else => {},
     }
 }
 
@@ -35,9 +46,9 @@ fn enableRawMode() !void {
     var raw = original_termios;
     raw.iflag &= ~(os.linux.BRKINT | os.linux.ICRNL | os.linux.INPCK | os.linux.ISTRIP | os.linux.IXON);
     raw.oflag &= ~(os.linux.OPOST);
-    raw.cflag |=  (os.linux.CS8);
+    raw.cflag |= (os.linux.CS8);
     raw.lflag &= ~(os.linux.ECHO | os.linux.ICANON | os.linux.IEXTEN | os.linux.ISIG);
-    raw.cc[VMIN]  = 0;
+    raw.cc[VMIN] = 0;
     raw.cc[VTIME] = 1;
     try os.tcsetattr(stdin_handle, os.TCSA.FLUSH, raw);
 }
@@ -48,6 +59,6 @@ fn disableRawMode() void {
     };
 }
 
-fn ctrlKey(k : u8) u8 {
+fn ctrlKey(k: u8) u8 {
     return k & 0x1f;
 }

@@ -4,13 +4,8 @@ const os = std.os;
 const debug = std.debug;
 const ascii = std.ascii;
 
-// termios cc id
-const VMIN = 6;
-const VTIME = 5;
-
-// default terminal attribute
-var original_termios: os.termios = undefined;
-const stdin_handle = io.getStdIn().handle;
+const stdin = io.getStdIn().reader();
+const stdout = io.getStdOut().writer();
 
 pub fn main() !void {
     try enableRawMode();
@@ -21,7 +16,6 @@ pub fn main() !void {
 }
 
 fn editorReadkey() u8 {
-    const stdin = io.getStdIn().reader();
     var buf: [1]u8 = undefined;
     while (true) {
         var nread = stdin.read(&buf) catch debug.panic("{s}\n", .{"read"});
@@ -41,6 +35,18 @@ fn editorProcessKeyPress() void {
     }
 }
 
+fn ctrlKey(k: u8) u8 {
+    return k & 0x1f;
+}
+
+// termios cc id
+const VMIN = 6;
+const VTIME = 5;
+
+// default terminal attribute
+var original_termios: os.termios = undefined;
+const stdin_handle = io.getStdIn().handle;
+
 fn enableRawMode() !void {
     original_termios = try os.tcgetattr(stdin_handle);
     var raw = original_termios;
@@ -57,8 +63,4 @@ fn disableRawMode() void {
     os.tcsetattr(stdin_handle, os.TCSA.FLUSH, original_termios) catch |err| {
         std.debug.print("{}", .{err});
     };
-}
-
-fn ctrlKey(k: u8) u8 {
-    return k & 0x1f;
 }

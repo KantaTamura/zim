@@ -14,7 +14,7 @@ ter: Terminal,
 buf: AppendBuffer,
 
 pub fn init(ter: Terminal, buf: AppendBuffer) Self {
-    return Self {
+    return Self{
         .ter = ter,
         .buf = buf,
     };
@@ -46,16 +46,20 @@ fn ctrlKey(k: u8) u8 {
     return k & 0x1f;
 }
 
-pub fn refreshScreen(self: Self) !void {
-    try stdout.writeAll("\x1b[2J");
-    try stdout.writeAll("\x1b[H");
+pub fn refreshScreen(self: *Self) !void {
+    try self.buf.append("\x1b[2J");
+    try self.buf.append("\x1b[H");
     try self.drawRows();
-    try stdout.writeAll("\x1b[H");
+    try self.buf.append("\x1b[H");
+    try stdout.writeAll(self.buf.memory.items);
 }
 
-fn drawRows(self: Self) !void {
+fn drawRows(self: *Self) !void {
     var y: usize = 0;
     while (y < self.ter.size.row) : (y += 1) {
-        try stdout.writeAll("~\r\n");
+        try self.buf.append("~");
+        if (y < self.ter.size.row - 1) {
+            try self.buf.append("\r\n");
+        }
     }
 }

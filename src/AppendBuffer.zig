@@ -17,6 +17,6 @@ pub fn deinit(self: Self) void {
     self.memory.deinit();
 }
 
-pub fn append(self: Self, str: []u8) !void {
+pub fn append(self: *Self, str: []const u8) !void {
     try self.memory.appendSlice(str);
 }

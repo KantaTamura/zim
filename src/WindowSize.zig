@@ -3,30 +3,29 @@ const os = std.os;
 const io = std.io;
 const fmt = std.fmt;
 const debug = std.debug;
-const editor = @import("editor.zig");
 
 const stdin_handle = io.getStdIn().handle;
 const stdin = io.getStdIn().reader();
 const stdout = io.getStdOut().writer();
 
-pub const Size = struct {
-    row: i32,
-    col: i32,
-};
+const Self = @This();
 
-pub fn getWindowsSize() !Size {
+row: i32,
+col: i32,
+
+pub fn getWindowsSize() !Self {
     var ws: os.linux.winsize = undefined;
     if (os.linux.ioctl(stdin_handle, os.linux.T.IOCGWINSZ, @ptrToInt(&ws)) == -1 or ws.ws_col == 0) {
         try stdout.writeAll("\x1b[999C\x1b[999B");
         return try getCursorPosition();
     }
-    return Size{
+    return Self{
         .row = ws.ws_row,
         .col = ws.ws_col,
     };
 }
 
-fn getCursorPosition() !Size {
+fn getCursorPosition() !Self {
     try stdout.writeAll("\x1b[6n\r\n");
     var buf: [1]u8 = undefined;
     var read: [32]u8 = undefined;
@@ -44,14 +43,14 @@ fn getCursorPosition() !Size {
     return getPosition(read[2..]);
 }
 
-fn getPosition(read: []u8) !Size {
+fn getPosition(read: []u8) !Self {
     var fis = io.fixedBufferStream(read);
     var reader = fis.reader();
     var buf1: [5]u8 = undefined;
     var buf2: [5]u8 = undefined;
     var row_buf = try reader.readUntilDelimiter(&buf1, ';');
     var col_buf = try reader.readUntilDelimiter(&buf2, ';');
-    return Size{
+    return Self{
         .row = try fmt.parseInt(i32, row_buf[0..], 0),
         .col = try fmt.parseInt(i32, col_buf[0..], 0),
     };

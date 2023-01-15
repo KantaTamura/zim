@@ -2,11 +2,23 @@ const std = @import("std");
 const io = std.io;
 const os = std.os;
 const debug = std.debug;
-const terminal = @import("terminal.zig");
-const window_size = @import("window_size.zig");
+const Terminal = @import("Terminal.zig");
+const AppendBuffer = @import("AppendBuffer.zig");
 
 const stdin = io.getStdIn().reader();
 const stdout = io.getStdOut().writer();
+
+const Self = @This();
+
+ter: Terminal,
+buf: AppendBuffer,
+
+pub fn init(ter: Terminal, buf: AppendBuffer) Self {
+    return Self {
+        .ter = ter,
+        .buf = buf,
+    };
+}
 
 pub fn readkey() u8 {
     var buf: [1]u8 = undefined;
@@ -17,7 +29,7 @@ pub fn readkey() u8 {
     return buf[0];
 }
 
-pub fn processKeyPress() !void {
+pub fn processKeyPress(_: Self) !void {
     var c = readkey();
 
     switch (c) {
@@ -34,20 +46,16 @@ fn ctrlKey(k: u8) u8 {
     return k & 0x1f;
 }
 
-pub fn refreshScreen() !void {
+pub fn refreshScreen(self: Self) !void {
     try stdout.writeAll("\x1b[2J");
     try stdout.writeAll("\x1b[H");
-    try drawRows();
+    try self.drawRows();
     try stdout.writeAll("\x1b[H");
 }
 
-fn drawRows() !void {
+fn drawRows(self: Self) !void {
     var y: usize = 0;
-    while (y < terminal.editor.size.row) : (y += 1) {
+    while (y < self.ter.size.row) : (y += 1) {
         try stdout.writeAll("~\r\n");
     }
-}
-
-pub fn init() !void {
-    terminal.editor.size = try window_size.getWindowsSize();
 }

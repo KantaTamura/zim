@@ -11,7 +11,8 @@ pub fn main() !void {
     try enableRawMode();
     defer disableRawMode();
     while (true) {
-        editorProcessKeyPress();
+        try editorRefreshScreen();
+        try editorProcessKeyPress();
     }
 }
 
@@ -24,11 +25,13 @@ fn editorReadkey() u8 {
     return buf[0];
 }
 
-fn editorProcessKeyPress() void {
+fn editorProcessKeyPress() !void {
     var c = editorReadkey();
 
     switch (c) {
         ctrlKey('q') => {
+            try stdout.writeAll("\x1b[2J");
+            try stdout.writeAll("\x1b[H");
             os.exit(0);
         },
         else => {},
@@ -37,6 +40,20 @@ fn editorProcessKeyPress() void {
 
 fn ctrlKey(k: u8) u8 {
     return k & 0x1f;
+}
+
+fn editorRefreshScreen() !void {
+    try stdout.writeAll("\x1b[2J");
+    try stdout.writeAll("\x1b[H");
+    try editorDrawRows();
+    try stdout.writeAll("\x1b[H");
+}
+
+fn editorDrawRows() !void {
+    var y : usize = 0;
+    while (y < 24) : (y += 1) {
+        try stdout.writeAll("~\r\n");
+    }
 }
 
 // termios cc id

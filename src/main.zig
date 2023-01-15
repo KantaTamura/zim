@@ -10,6 +10,7 @@ const stdout = io.getStdOut().writer();
 pub fn main() !void {
     try enableRawMode();
     defer disableRawMode();
+    try initEditor();
     while (true) {
         try editorRefreshScreen();
         try editorProcessKeyPress();
@@ -50,23 +51,51 @@ fn editorRefreshScreen() !void {
 }
 
 fn editorDrawRows() !void {
-    var y : usize = 0;
-    while (y < 24) : (y += 1) {
+    var y: usize = 0;
+    while (y < editor.size.row) : (y += 1) {
         try stdout.writeAll("~\r\n");
     }
+}
+
+fn initEditor() !void {
+    editor.size = getWindowsSize();
 }
 
 // termios cc id
 const VMIN = 6;
 const VTIME = 5;
 
-// default terminal attribute
-var original_termios: os.termios = undefined;
+const editorConfig = struct {
+    original_termios: os.termios,
+    size: windowSize,
+};
+
+const windowSize = struct {
+    row: i32,
+    col: i32,
+};
+
+fn getWindowsSize() windowSize {
+    var ws: os.linux.winsize = undefined;
+    if (os.linux.ioctl(stdin_handle, os.linux.T.IOCGWINSZ, @ptrToInt(&ws)) == -1 or ws.ws_col == 0) {
+        debug.panic("{s}\n", .{"ioctl"});
+    }
+    return windowSize{
+        .row = ws.ws_row,
+        .col = ws.ws_col,
+    };
+}
+
+var editor = editorConfig{
+    .original_termios = undefined,
+    .size = undefined,
+};
+
 const stdin_handle = io.getStdIn().handle;
 
 fn enableRawMode() !void {
-    original_termios = try os.tcgetattr(stdin_handle);
-    var raw = original_termios;
+    editor.original_termios = try os.tcgetattr(stdin_handle);
+    var raw = editor.original_termios;
     raw.iflag &= ~(os.linux.BRKINT | os.linux.ICRNL | os.linux.INPCK | os.linux.ISTRIP | os.linux.IXON);
     raw.oflag &= ~(os.linux.OPOST);
     raw.cflag |= (os.linux.CS8);
@@ -77,7 +106,7 @@ fn enableRawMode() !void {
 }
 
 fn disableRawMode() void {
-    os.tcsetattr(stdin_handle, os.TCSA.FLUSH, original_termios) catch |err| {
+    os.tcsetattr(stdin_handle, os.TCSA.FLUSH, editor.original_termios) catch |err| {
         std.debug.print("{}", .{err});
     };
 }

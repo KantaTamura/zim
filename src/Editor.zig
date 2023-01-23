@@ -81,10 +81,18 @@ pub fn processKeyPress(self: *Self) !void {
 
 fn moveCursor(self: *Self, arrow: ArrowKey) void {
     switch (arrow) {
-        .left => self.cx -= 1,
-        .right => self.cx += 1,
-        .up => self.cy -= 1,
-        .down => self.cy += 1,
+        .left => {
+            if (self.cx > 0) self.cx -= 1;
+        },
+        .right => {
+            if (self.cx < self.ter.size.col) self.cx += 1;
+        },
+        .up => {
+            if (self.cy > 0) self.cy -= 1;
+        },
+        .down => {
+            if (self.cy < self.ter.size.row) self.cy += 1;
+        },
     }
 }
 

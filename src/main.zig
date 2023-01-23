@@ -15,5 +15,4 @@ pub fn main() !void {
         try edi.refreshScreen();
         try edi.processKeyPress();
     }
-    std.debug.print("row : {d}, col : {d}\r\n", .{ter.size.row, ter.size.col});
 }

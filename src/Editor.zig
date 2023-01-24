@@ -27,6 +27,9 @@ const FuncKey = enum {
     arrow_right,
     arrow_up,
     arrow_down,
+    home,
+    end,
+    delete,
     page_up,
     page_down,
 };
@@ -51,18 +54,39 @@ pub fn readkey() Key {
         var seq: [3]u8 = undefined;
         _ = stdin.read(&seq) catch debug.panic("{s}\n", .{"read"});
         if (seq[0] == '[') {
-            if (seq[1] >= '0' and seq[1] <= '9' and seq[2] == '~') {
-                switch (seq[1]) {
-                    '5' => return Key{ .func = .page_up },
-                    '6' => return Key{ .func = .page_down },
-                    else => {},
-                }
-            }
             switch (seq[1]) {
                 'A' => return Key{ .func = .arrow_up },
                 'B' => return Key{ .func = .arrow_down },
                 'C' => return Key{ .func = .arrow_right },
                 'D' => return Key{ .func = .arrow_left },
+                'H' => return Key{ .func = .home },
+                'F' => return Key{ .func = .end },
+                '5' => {
+                    if (seq[2] != '~') return Key{ .char = '\x1b' };
+                    return Key{ .func = .page_up };
+                },
+                '6' => {
+                    if (seq[2] != '~') return Key{ .char = '\x1b' };
+                    return Key{ .func = .page_down };
+                },
+                '1', '7' => {
+                    if (seq[2] != '~') return Key{ .char = '\x1b' };
+                    return Key{ .func = .home };
+                },
+                '4', '8' => {
+                    if (seq[2] != '~') return Key{ .char = '\x1b' };
+                    return Key{ .func = .end };
+                },
+                '3' => {
+                    if (seq[2] != '~') return Key{ .char = '\x1b' };
+                    return Key{ .func = .delete };
+                },
+                else => {},
+            }
+        } else if (seq[0] == 'O') {
+            switch (seq[1]) {
+                'H' => return Key{ .func = .home },
+                'F' => return Key{ .func = .end },
                 else => {},
             }
         }
@@ -109,6 +133,9 @@ fn moveCursor(self: *Self, fun: FuncKey) void {
             var times = self.ter.size.row;
             while (times > 0) : (times -= 1) self.moveCursor(if (fun == .page_up) .arrow_up else .arrow_down);
         },
+        .home => self.cx = 0,
+        .end => self.cx = self.ter.size.col - 1,
+        .delete => {},
     }
 }
 

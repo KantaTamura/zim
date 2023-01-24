@@ -19,14 +19,16 @@ version: []const u8,
 
 const Key = union(enum) {
     char: u8,
-    arrow: ArrowKey,
+    func: FuncKey,
 };
 
-const ArrowKey = enum {
-    left,
-    right,
-    up,
-    down,
+const FuncKey = enum {
+    arrow_left,
+    arrow_right,
+    arrow_up,
+    arrow_down,
+    page_up,
+    page_down,
 };
 
 pub fn init(ter: Terminal, buf: AppendBuffer, version: []const u8) Self {
@@ -47,14 +49,20 @@ pub fn readkey() Key {
     }
     if (buf[0] == '\x1b') {
         var seq: [3]u8 = undefined;
-        var nread = stdin.read(&seq) catch debug.panic("{s}\n", .{"read"});
-        if (nread != 1) return Key{ .char = '\x1b' };
+        _ = stdin.read(&seq) catch debug.panic("{s}\n", .{"read"});
         if (seq[0] == '[') {
+            if (seq[1] >= '0' and seq[1] <= '9' and seq[2] == '~') {
+                switch (seq[1]) {
+                    '5' => return Key{ .func = .page_up },
+                    '6' => return Key{ .func = .page_down },
+                    else => {},
+                }
+            }
             switch (seq[1]) {
-                'A' => return Key{ .arrow = .up },
-                'B' => return Key{ .arrow = .down },
-                'C' => return Key{ .arrow = .right },
-                'D' => return Key{ .arrow = .left },
+                'A' => return Key{ .func = .arrow_up },
+                'B' => return Key{ .func = .arrow_down },
+                'C' => return Key{ .func = .arrow_right },
+                'D' => return Key{ .func = .arrow_left },
                 else => {},
             }
         }
@@ -75,23 +83,31 @@ pub fn processKeyPress(self: *Self) !void {
             },
             else => {},
         },
-        .arrow => |dir| self.moveCursor(dir),
+        .func => |fun| self.moveCursor(fun),
     }
 }
 
-fn moveCursor(self: *Self, arrow: ArrowKey) void {
-    switch (arrow) {
-        .left => {
-            if (self.cx > 0) self.cx -= 1;
+fn moveCursor(self: *Self, fun: FuncKey) void {
+    switch (fun) {
+        .arrow_left => {
+            if (self.cx > 0)
+                self.cx -= 1;
         },
-        .right => {
-            if (self.cx < self.ter.size.col) self.cx += 1;
+        .arrow_right => {
+            if (self.cx < self.ter.size.col)
+                self.cx += 1;
         },
-        .up => {
-            if (self.cy > 0) self.cy -= 1;
+        .arrow_up => {
+            if (self.cy > 0)
+                self.cy -= 1;
         },
-        .down => {
-            if (self.cy < self.ter.size.row) self.cy += 1;
+        .arrow_down => {
+            if (self.cy < self.ter.size.row)
+                self.cy += 1;
+        },
+        .page_up, .page_down => {
+            var times = self.ter.size.row;
+            while (times > 0) : (times -= 1) self.moveCursor(if (fun == .page_up) .arrow_up else .arrow_down);
         },
     }
 }
